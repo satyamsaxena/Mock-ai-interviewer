@@ -1,5 +1,9 @@
 # InterviewAI - Mock Interview Agent
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mock-ai-interviewers-agent.vercel.app/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![Groq](https://img.shields.io/badge/Powered%20by-Groq-F55036?style=for-the-badge)](https://groq.com)
+
 An AI-powered mock interview platform that simulates real technical interviews using Groq's LLM API.
 
 ## Live Demo
