@@ -240,9 +240,13 @@ app.post('/api/parse-resume', upload.single('resume'), async (req, res) => {
         let text = '';
 
         if (name.endsWith('.pdf') || mimetype === 'application/pdf') {
-            const pdfParse = require('pdf-parse');
-            const data = await pdfParse(buffer);
-            text = data.text;
+            const PDFParser = require('pdf2json');
+            text = await new Promise((resolve, reject) => {
+                const parser = new PDFParser(null, true);
+                parser.on('pdfParser_dataReady', () => resolve(parser.getRawTextContent()));
+                parser.on('pdfParser_dataError', reject);
+                parser.parseBuffer(buffer);
+            });
         } else if (name.endsWith('.docx') || mimetype.includes('wordprocessingml')) {
             const mammoth = require('mammoth');
             const result = await mammoth.extractRawText({ buffer });
