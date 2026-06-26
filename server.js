@@ -28,7 +28,14 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const groq     = new Groq({ apiKey: process.env.GROQ_API_KEY });
+let groq;
+function getGroq() {
+    if (!groq) {
+        if (!process.env.GROQ_API_KEY) throw new Error('GROQ_API_KEY environment variable is not set');
+        groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    }
+    return groq;
+}
 const sessions = new Map();
 const upload   = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
@@ -182,7 +189,7 @@ async function callGroq(messages, maxTokens = 4096) {
         }
 
         try {
-            const r = await groq.chat.completions.create({
+            const r = await getGroq().chat.completions.create({
                 model: id, messages,
                 temperature: 0.7, max_tokens: maxTokens
             });
