@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login – InterviewAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6d28d9 100%);
+      padding: 1rem;
+    }
+
+    /* Subtle animated background dots */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 1.25rem;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow:
+        0 20px 60px rgba(79, 70, 229, 0.35),
+        0 4px 16px rgba(0, 0, 0, 0.12);
+      position: relative;
+    }
+
+    /* Logo area at the top of the card */
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .logo-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 1rem;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+      margin-bottom: 0.875rem;
+    }
+
+    .logo-icon span {
+      color: #ffffff;
+      font-size: 1.375rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-name {
+      font-size: 1.375rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.3px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: #1e1b4b;
+      margin-bottom: 0.25rem;
+    }
+
+    .page-subtitle {
+      text-align: center;
+      font-size: 0.8125rem;
+      color: #6b7280;
+      margin-bottom: 1.75rem;
+    }
+
+    /* Error banner shown when ?error=1 is in the URL */
+    .error-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 0.625rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.8125rem;
+      color: #dc2626;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .error-banner svg {
+      flex-shrink: 0;
+    }
+
+    .form-group {
+      margin-bottom: 1.125rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.375rem;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.6875rem 0.875rem;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 0.625rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9375rem;
+      color: #111827;
+      background: #f9fafb;
+      transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #6d28d9;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12);
+    }
+
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder {
+      color: #9ca3af;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.625rem;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #ffffff;
+      border: none;
+      border-radius: 0.625rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.18s, transform 0.12s, box-shadow 0.18s;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.38);
+    }
+
+    .btn-submit:hover {
+      opacity: 0.92;
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.25rem;
+      font-size: 0.8125rem;
+      color: #6b7280;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: #4f46e5;
+    }
+
+    /* Make the card fill the screen nicely on very small phones */
+    @media (max-width: 420px) {
+      .card {
+        padding: 2rem 1.375rem;
+        border-radius: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <span>AI</span>
+      </div>
+      <div class="logo-name">InterviewAI</div>
+    </div>
+
+    <h1 class="page-title">Admin Login</h1>
+    <p class="page-subtitle">Sign in to access the admin dashboard</p>
+
+    <!-- This banner is shown only when the URL contains ?error=1 -->
+    <div class="error-banner" id="errorBanner">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+      </svg>
+      Invalid username or password. Please try again.
+    </div>
+
+    <form method="POST" action="/admin/login">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Enter your username"
+          autocomplete="username"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-submit">Sign In</button>
+    </form>
+
+    <a href="/" class="back-link">Back to InterviewAI</a>
+  </div>
+
+  <script>
+    // Show the error banner if the server redirected back with ?error=1
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('error') === '1') {
+        const banner = document.getElementById('errorBanner');
+        if (banner) banner.style.display = 'flex';
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -5,26 +5,139 @@ const path     = require('path');
 const crypto   = require('crypto');
 const fs       = require('fs');
 const multer   = require('multer');
+const session  = require('express-session');
+const Database = require('better-sqlite3');
 
-/* ── Persistent data store ── */
-// On Vercel the filesystem is read-only; use /tmp (ephemeral but avoids crashes)
-const DATA_DIR  = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'interviews.json');
-try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {}
+// Determine where to store the database file.
+// On Vercel the filesystem is read-only except for /tmp, so we use that.
+// Locally we keep it inside a data/ folder next to this file.
+const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'data');
+const DB_PATH  = path.join(DATA_DIR, 'interviews.db');
 
-function loadRecords() {
-    try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch { return []; }
+// Make sure the data directory exists before opening the database
+try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (e) {
+    // If creating the folder fails we still attempt to open the database
 }
+
+// Open (or create) the SQLite database file
+const db = new Database(DB_PATH);
+
+// Create the users table if it does not already exist
+db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        name       TEXT NOT NULL,
+        email      TEXT,
+        mobile     TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+`);
+
+// Create the interviews table if it does not already exist
+db.exec(`
+    CREATE TABLE IF NOT EXISTS interviews (
+        id                 TEXT PRIMARY KEY,
+        user_id            INTEGER,
+        name               TEXT,
+        email              TEXT,
+        mobile             TEXT,
+        role               TEXT,
+        type               TEXT,
+        started_at         TEXT,
+        completed_at       TEXT,
+        questions_answered INTEGER DEFAULT 0,
+        overall_score      REAL,
+        grade              TEXT,
+        recommendation     TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+`);
+
+// Prepare frequently used SQL statements once so they are fast to run
+const stmtFindUser      = db.prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+const stmtInsertUser    = db.prepare('INSERT INTO users (name, email, mobile) VALUES (?, ?, ?)');
+const stmtUpsertInterview = db.prepare(`
+    INSERT OR REPLACE INTO interviews
+        (id, user_id, name, email, mobile, role, type,
+         started_at, completed_at, questions_answered,
+         overall_score, grade, recommendation)
+    VALUES
+        (@id, @user_id, @name, @email, @mobile, @role, @type,
+         @started_at, @completed_at, @questions_answered,
+         @overall_score, @grade, @recommendation)
+`);
+const stmtAllInterviews = db.prepare('SELECT * FROM interviews ORDER BY completed_at DESC');
+
+// Save a completed interview to the database.
+// If the candidate has an email we try to reuse their existing user record,
+// otherwise we create a new one.
 function saveRecord(record) {
-    const records = loadRecords();
-    records.push(record);
-    fs.writeFileSync(DATA_FILE, JSON.stringify(records, null, 2));
+    let userId = null;
+
+    if (record.email) {
+        const existing = stmtFindUser.get(record.email);
+        if (existing) {
+            userId = existing.id;
+        } else {
+            const info = stmtInsertUser.run(record.name || '', record.email, record.mobile || '');
+            userId = info.lastInsertRowid;
+        }
+    } else {
+        // No email available, create an anonymous user row
+        const info = stmtInsertUser.run(record.name || '', null, record.mobile || '');
+        userId = info.lastInsertRowid;
+    }
+
+    stmtUpsertInterview.run({
+        id:                 record.id,
+        user_id:            userId,
+        name:               record.name || null,
+        email:              record.email || null,
+        mobile:             record.mobile || null,
+        role:               record.role || null,
+        type:               record.type || null,
+        started_at:         record.startedAt || null,
+        completed_at:       record.completedAt || null,
+        questions_answered: record.questionsAnswered || 0,
+        overall_score:      record.overallScore || null,
+        grade:              record.grade || null,
+        recommendation:     record.recommendation || null,
+    });
+}
+
+// Fetch all interview records ordered from most recent to oldest
+function loadRecords() {
+    return stmtAllInterviews.all();
 }
 
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Set up session middleware used for admin login
+// The secret should be changed via the SESSION_SECRET environment variable in production
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'interviewai-secret-change-me',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 8 * 60 * 60 * 1000 }  // sessions last 8 hours
+}));
+
+// Admin credentials read from environment variables with safe fallback defaults
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+// Middleware that protects admin routes.
+// If the visitor is not logged in they are sent to the login page.
+function requireAdmin(req, res, next) {
+    if (req.session && req.session.isAdmin) {
+        return next();
+    }
+    res.redirect('/admin/login');
+}
 
 let groq;
 function getGroq() {
@@ -37,7 +150,7 @@ function getGroq() {
 const sessions = new Map();
 const upload   = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
-/* ── Multi-model fallback pool ── */
+// List of AI models to try in order when making Groq API calls
 const MODELS = [
     { id: 'llama-3.3-70b-versatile',                        label: 'Llama 3.3 70B'     },
     { id: 'meta-llama/llama-4-scout-17b-16e-instruct',      label: 'Llama 4 Scout'     },
@@ -46,7 +159,7 @@ const MODELS = [
     { id: 'llama-3.1-8b-instant',                           label: 'Llama 3.1 8B'      },
     { id: 'gemma2-9b-it',                                   label: 'Gemma 2 9B'        },
 ];
-const modelCooldown = new Map();   // modelId -> cooldown-until ms timestamp
+const modelCooldown = new Map();   // tracks when each model becomes available again
 let   activeModelIdx = 0;
 
 function isCoolingDown(id) {
@@ -55,7 +168,7 @@ function isCoolingDown(id) {
 }
 
 function markCooldown(id, isDaily) {
-    const ms = isDaily ? 2 * 3600_000 : 5 * 60_000;   // 2 h daily | 5 min per-minute
+    const ms = isDaily ? 2 * 3600_000 : 5 * 60_000;   // 2 hours for daily limit, 5 minutes for per-minute limit
     modelCooldown.set(id, Date.now() + ms);
     return ms;
 }
@@ -141,7 +254,7 @@ FORMAT 3 - After answer 10 (final):
 {"type":"evaluation_and_report","evaluation":{"score":<1-10>,"label":"<label>","feedback":"<2-3 sentences>","strengths":["<s>","<s>"],"improvements":["<i>","<i>"],"idealAnswer":"<model answer with example>","suggestions":["<t>","<t>","<t>"]},"report":{"overallScore":<1.0-10.0>,"grade":"<A+|A|B+|B|C+|C|D|F>","recommendation":"<Strong Hire|Hire|Consider|No Hire>","summary":"<holistic 2-3 sentences>","topStrengths":["<s>","<s>","<s>"],"topImprovements":["<i>","<i>","<i>"],"questionBreakdown":[{"number":1,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":2,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":3,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":4,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":5,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":6,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":7,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":8,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":9,"topic":"<t>","skillArea":"<a>","score":<n>},{"number":10,"topic":"<t>","skillArea":"<a>","score":<n>}],"nextSteps":"<personalised 2-3 sentence study advice>"}}`;
 }
 
-/* ── JSON helpers ── */
+// Fix truncated JSON strings returned by the AI by closing any open brackets or quotes
 function closeTruncatedJSON(s) {
     const stack = [];
     let inStr = false, esc = false;
@@ -159,10 +272,11 @@ function closeTruncatedJSON(s) {
     return s;
 }
 
+// Parse AI response text into a JavaScript object, handling markdown fences and truncation
 function parseJSON(text) {
     let c = text.trim()
         .replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
-        .replace(/<think>[\s\S]*?<\/think>/gi, '').trim()   // strip DeepSeek R1 reasoning
+        .replace(/<think>[\s\S]*?<\/think>/gi, '').trim()   // remove DeepSeek R1 chain-of-thought blocks
         .replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
 
     try { return JSON.parse(c); } catch {}
@@ -173,7 +287,7 @@ function parseJSON(text) {
     throw new Error('JSON parse failed. Raw: ' + c.slice(0, 300));
 }
 
-/* ── Multi-model Groq call with automatic fallback ── */
+// Call the Groq API and automatically fall back to another model if one is rate-limited
 async function callGroq(messages, maxTokens = 4096) {
     let lastErr = null;
 
@@ -214,13 +328,13 @@ async function callGroq(messages, maxTokens = 4096) {
             }
 
             if (isModelErr) {
-                markCooldown(id, true);   // treat unavailable model as long cooldown
+                markCooldown(id, true);   // treat an unavailable model like a long cooldown
                 console.warn(`  [model-err] ${label} not available - trying next`);
                 lastErr = err;
                 continue;
             }
 
-            throw err;   // non-retryable error bubbles up
+            throw err;   // any other error is not retryable, let it bubble up
         }
     }
 
@@ -230,7 +344,7 @@ async function callGroq(messages, maxTokens = 4096) {
     );
 }
 
-/* ══ Resume parse endpoint ══ */
+// Parse an uploaded resume file and return its text content
 app.post('/api/parse-resume', upload.single('resume'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -255,7 +369,7 @@ app.post('/api/parse-resume', upload.single('resume'), async (req, res) => {
             text = buffer.toString('utf-8');
         }
 
-        // Normalise whitespace
+        // Collapse excessive whitespace so the text is clean before sending to the AI
         text = text.replace(/\s{3,}/g, '\n\n').trim();
         res.json({ text: text.slice(0, 3000), chars: text.length });
     } catch (err) {
@@ -264,7 +378,7 @@ app.post('/api/parse-resume', upload.single('resume'), async (req, res) => {
     }
 });
 
-/* ══ Start interview ══ */
+// Start a new interview session and return the first question
 app.post('/api/start', async (req, res) => {
     try {
         const { name, mobile, email, role, type, resumeText } = req.body;
@@ -284,6 +398,7 @@ app.post('/api/start', async (req, res) => {
             role, type, systemPrompt, history, answerCount: 0,
             startedAt: new Date().toISOString()
         });
+        // Remove the session from memory after 90 minutes of inactivity
         setTimeout(() => sessions.delete(sessionId), 90 * 60 * 1000);
 
         res.json({ sessionId, model, ...data });
@@ -293,7 +408,7 @@ app.post('/api/start', async (req, res) => {
     }
 });
 
-/* ══ Submit answer ══ */
+// Accept a candidate answer, evaluate it, and return the next question or final report
 app.post('/api/answer', async (req, res) => {
     try {
         const { sessionId, answer } = req.body;
@@ -314,22 +429,21 @@ app.post('/api/answer', async (req, res) => {
         if (data.type === 'evaluation_and_question') {
             res.json({ feedback: data.evaluation, next: data.nextQuestion, model });
         } else if (data.type === 'evaluation_and_report') {
-            // Persist completed interview record
+            // Save the completed interview to the database
             try {
                 saveRecord({
-                    id:               sessionId,
-                    timestamp:        new Date().toISOString(),
-                    name:             session.name,
-                    email:            session.email,
-                    mobile:           session.mobile,
-                    role:             session.role,
-                    type:             session.type,
-                    startedAt:        session.startedAt,
-                    completedAt:      new Date().toISOString(),
+                    id:                sessionId,
+                    name:              session.name,
+                    email:             session.email,
+                    mobile:            session.mobile,
+                    role:              session.role,
+                    type:              session.type,
+                    startedAt:         session.startedAt,
+                    completedAt:       new Date().toISOString(),
                     questionsAnswered: session.answerCount,
-                    overallScore:     data.report?.overallScore ?? null,
-                    grade:            data.report?.grade ?? null,
-                    recommendation:   data.report?.recommendation ?? null,
+                    overallScore:      data.report?.overallScore ?? null,
+                    grade:             data.report?.grade ?? null,
+                    recommendation:    data.report?.recommendation ?? null,
                 });
             } catch(e) { console.warn('[save-record]', e.message); }
 
@@ -343,7 +457,7 @@ app.post('/api/answer', async (req, res) => {
     }
 });
 
-/* ══ Hint - I don't know ══ */
+// Return a hint and explanation for a question the candidate is stuck on
 app.post('/api/hint', async (req, res) => {
     try {
         const { sessionId } = req.body;
@@ -352,7 +466,7 @@ app.post('/api/hint', async (req, res) => {
         const session = sessions.get(sessionId);
         if (!session) return res.status(404).json({ error: 'Session not found or expired' });
 
-        // Extract the current question text from the last AI message
+        // Find the text of the most recent question from the AI history
         let questionText = 'this topic';
         const lastAsst = [...session.history].reverse().find(m => m.role === 'assistant');
         if (lastAsst) {
@@ -378,7 +492,7 @@ Explain the concept clearly and helpfully. Output ONLY valid JSON (no markdown f
     }
 });
 
-/* ══ Hindi translation (Google Translate free endpoint) ══ */
+// Translate text to Hindi using the free Google Translate endpoint
 app.post('/api/translate', async (req, res) => {
     const { text } = req.body;
     if (!text || !text.trim()) return res.json({ hindi: '' });
@@ -404,27 +518,50 @@ app.post('/api/translate', async (req, res) => {
     }
 });
 
-/* ══════════════════════════════════════
-   Admin Panel Routes
-══════════════════════════════════════ */
-app.use(express.urlencoded({ extended: false }));
 
-/* Data API — open to localhost, protect in production via ADMIN_KEY query param */
-app.get('/api/admin/data', (req, res) => {
-    res.json(loadRecords());
+// Show the admin login page, or redirect to the dashboard if already logged in
+app.get('/admin/login', (req, res) => {
+    if (req.session && req.session.isAdmin) {
+        return res.redirect('/admin');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
-/* Admin dashboard — served directly, no login required */
-app.get('/admin', (req, res) => {
+// Handle the login form submission
+app.post('/admin/login', express.urlencoded({ extended: false }), (req, res) => {
+    const { username, password } = req.body;
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        req.session.isAdmin = true;
+        return res.redirect('/admin');
+    }
+    res.redirect('/admin/login?error=1');
+});
+
+// Log the admin out by destroying the session and sending them back to the login page
+app.get('/admin/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/admin/login');
+    });
+});
+
+// Serve the admin dashboard page (login required)
+app.get('/admin', requireAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Only bind a port when running locally (Vercel invokes the handler directly)
+// Return all interview records as JSON for the admin dashboard (login required)
+app.get('/api/admin/data', requireAdmin, (req, res) => {
+    res.json(loadRecords());
+});
+
+
+// Only start the HTTP server when running locally.
+// On Vercel the platform invokes the exported app handler directly.
 if (!process.env.VERCEL) {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-        console.log(`\n  InterviewAI → http://localhost:${PORT}\n`);
-        if (!process.env.GROQ_API_KEY) console.warn('  ⚠  GROQ_API_KEY not set\n');
+        console.log(`\n  InterviewAI -> http://localhost:${PORT}\n`);
+        if (!process.env.GROQ_API_KEY) console.warn('  WARNING: GROQ_API_KEY not set\n');
     });
 }
 
