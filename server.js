@@ -5,8 +5,6 @@ const path     = require('path');
 const crypto   = require('crypto');
 const fs       = require('fs');
 const multer   = require('multer');
-const pdfParse = require('pdf-parse');
-const mammoth  = require('mammoth');
 
 /* ── Persistent data store ── */
 // On Vercel the filesystem is read-only; use /tmp (ephemeral but avoids crashes)
@@ -242,9 +240,11 @@ app.post('/api/parse-resume', upload.single('resume'), async (req, res) => {
         let text = '';
 
         if (name.endsWith('.pdf') || mimetype === 'application/pdf') {
+            const pdfParse = require('pdf-parse');
             const data = await pdfParse(buffer);
             text = data.text;
         } else if (name.endsWith('.docx') || mimetype.includes('wordprocessingml')) {
+            const mammoth = require('mammoth');
             const result = await mammoth.extractRawText({ buffer });
             text = result.value;
         } else {
