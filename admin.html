@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel · InterviewAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Variables ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --bg:        #f0f2f8;
+    --surface:   #ffffff;
+    --surface-2: #f8f9fc;
+    --border:    #e4e9f2;
+    --indigo:    #6366f1;
+    --indigo-dk: #4f46e5;
+    --indigo-lt: #eef2ff;
+    --violet:    #8b5cf6;
+    --emerald:   #10b981;
+    --amber:     #f59e0b;
+    --red:       #ef4444;
+    --sky:       #0ea5e9;
+    --text:      #0f172a;
+    --text-2:    #475569;
+    --text-3:    #94a3b8;
+    --shadow:    0 4px 20px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.05);
+    --shadow-md: 0 8px 30px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
+    --radius:    14px;
+    --radius-sm: 10px;
+}
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+.adm-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.adm-brand { display: flex; align-items: center; gap: 10px; }
+.adm-brand-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; font-size: .85rem;
+}
+.adm-brand-name { font-weight: 800; font-size: 1rem; color: var(--text); }
+.adm-brand-badge {
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    background: var(--indigo-lt); color: var(--indigo);
+    padding: 2px 8px; border-radius: 100px; border: 1px solid #c7d2fe;
+}
+.adm-header-right { display: flex; align-items: center; gap: 12px; }
+.adm-refresh-btn, .adm-logout-btn, .adm-export-btn {
+    padding: 7px 14px; border-radius: var(--radius-sm);
+    font-size: .8rem; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: all .2s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.adm-refresh-btn { background: var(--surface-2); border: 1.5px solid var(--border); color: var(--text-2); }
+.adm-refresh-btn:hover { border-color: var(--indigo); color: var(--indigo); }
+.adm-export-btn { background: var(--indigo-lt); border: 1.5px solid #c7d2fe; color: var(--indigo); }
+.adm-export-btn:hover { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+.adm-logout-btn { background: #fef2f2; border: 1.5px solid #fecaca; color: var(--red); }
+.adm-logout-btn:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+/* ── Layout ── */
+.adm-body { padding: 28px; max-width: 1400px; margin: 0 auto; }
+
+/* ── Page title ── */
+.adm-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+.adm-subtitle { font-size: .85rem; color: var(--text-3); margin-bottom: 28px; }
+
+/* ── Stats ── */
+.adm-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 6px;
+}
+.stat-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-3); }
+.stat-value { font-size: 2rem; font-weight: 900; line-height: 1; }
+.stat-sub { font-size: .78rem; color: var(--text-3); }
+.stat-card.indigo .stat-value { color: var(--indigo); }
+.stat-card.emerald .stat-value { color: var(--emerald); }
+.stat-card.amber .stat-value { color: var(--amber); }
+.stat-card.sky .stat-value { color: var(--sky); }
+.stat-card.violet .stat-value { color: var(--violet); }
+.stat-card.red .stat-value { color: var(--red); }
+
+/* ── Toolbar ── */
+.adm-toolbar {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap;
+}
+.adm-search-wrap { position: relative; flex: 1; min-width: 220px; }
+.adm-search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; color: var(--text-3); pointer-events: none;
+}
+.adm-search {
+    width: 100%; padding: 9px 12px 9px 36px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: .88rem; font-family: inherit;
+    outline: none; transition: border-color .2s;
+}
+.adm-search:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+.adm-filter {
+    padding: 9px 12px; background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: .88rem; font-family: inherit;
+    outline: none; cursor: pointer; color: var(--text-2);
+    transition: border-color .2s;
+}
+.adm-filter:focus { border-color: var(--indigo); }
+.adm-count { font-size: .8rem; color: var(--text-3); white-space: nowrap; }
+
+/* ── Table ── */
+.adm-table-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: hidden;
+}
+.adm-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.adm-table thead { background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.adm-table th {
+    padding: 11px 16px; text-align: left;
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .4px; color: var(--text-3); white-space: nowrap;
+    cursor: pointer; user-select: none;
+    transition: color .15s;
+}
+.adm-table th:hover { color: var(--indigo); }
+.adm-table th.sorted { color: var(--indigo); }
+.adm-table th .sort-arrow { margin-left: 4px; opacity: .5; }
+.adm-table th.sorted .sort-arrow { opacity: 1; }
+.adm-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+}
+.adm-table tbody tr:last-child { border-bottom: none; }
+.adm-table tbody tr:hover { background: #fafbff; }
+.adm-table td { padding: 12px 16px; color: var(--text-2); vertical-align: middle; }
+.adm-table td.bold { color: var(--text); font-weight: 600; }
+.adm-table td.mono { font-family: 'Fira Code', monospace; font-size: .8rem; color: var(--text-3); }
+
+/* Score badge */
+.score-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    font-weight: 800; font-size: .88rem; border: 2px solid;
+}
+
+/* Grade + rec badges */
+.grade-badge, .rec-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 100px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .2px;
+}
+.grade-Ap  { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.grade-A   { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.grade-Bp  { background: var(--indigo-lt); color: var(--indigo); border: 1px solid #c7d2fe; }
+.grade-B   { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.grade-Cp  { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.grade-C   { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+.grade-D,.grade-F { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+.rec-sh { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.rec-h  { background: var(--indigo-lt); color: var(--indigo); border: 1px solid #c7d2fe; }
+.rec-c  { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.rec-n  { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* Type pill */
+.type-pill {
+    display: inline-block; padding: 2px 9px; border-radius: 100px;
+    font-size: .7rem; font-weight: 600;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2);
+}
+
+/* Empty state */
+.adm-empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-3);
+}
+.adm-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.adm-empty h3 { font-size: 1rem; font-weight: 700; color: var(--text-2); margin-bottom: 4px; }
+.adm-empty p { font-size: .85rem; }
+
+/* Loading */
+.adm-loading { text-align: center; padding: 60px; color: var(--text-3); font-size: .9rem; }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Detail modal */
+.modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(15,23,42,.5); backdrop-filter: blur(4px);
+    z-index: 100; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 28px; width: 90%; max-width: 520px;
+    box-shadow: var(--shadow-md); position: relative;
+    max-height: 90vh; overflow-y: auto;
+}
+.modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; width: 30px; height: 30px;
+    cursor: pointer; font-size: 1.1rem; color: var(--text-3);
+    display: flex; align-items: center; justify-content: center;
+}
+.modal-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 18px; }
+.modal-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+.modal-row:last-child { border-bottom: none; }
+.modal-key { color: var(--text-3); font-weight: 600; }
+.modal-val { color: var(--text); font-weight: 500; text-align: right; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="adm-header">
+    <div class="adm-brand">
+        <div class="adm-brand-icon">AI</div>
+        <span class="adm-brand-name">InterviewAI</span>
+        <span class="adm-brand-badge">Admin</span>
+    </div>
+    <div class="adm-header-right">
+        <button class="adm-refresh-btn" onclick="loadData()">
+            ↻ Refresh
+        </button>
+        <button class="adm-export-btn" onclick="exportCSV()">
+            ↓ Export CSV
+        </button>
+        <a href="/admin/logout" class="adm-logout-btn">⎋ Logout</a>
+    </div>
+</header>
+
+<!-- Body -->
+<div class="adm-body">
+    <h1 class="adm-title">Interview Records</h1>
+    <p class="adm-subtitle" id="adm-subtitle">Loading data…</p>
+
+    <!-- Stats -->
+    <div class="adm-stats" id="stats-row"></div>
+
+    <!-- Toolbar -->
+    <div class="adm-toolbar">
+        <div class="adm-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input class="adm-search" id="search-input" placeholder="Search name, email, mobile, role…" oninput="applyFilters()">
+        </div>
+        <select class="adm-filter" id="filter-rec" onchange="applyFilters()">
+            <option value="">All Recommendations</option>
+            <option value="Strong Hire">Strong Hire</option>
+            <option value="Hire">Hire</option>
+            <option value="Consider">Consider</option>
+            <option value="No Hire">No Hire</option>
+        </select>
+        <select class="adm-filter" id="filter-type" onchange="applyFilters()">
+            <option value="">All Types</option>
+            <option value="all">Full Interview</option>
+            <option value="software-engineering">Software Eng.</option>
+            <option value="frontend">Frontend</option>
+            <option value="backend">Backend</option>
+            <option value="system-design">System Design</option>
+            <option value="devops">DevOps</option>
+            <option value="data-science">Data Science</option>
+            <option value="database">Database</option>
+            <option value="mobile">Mobile</option>
+            <option value="cybersecurity">Cybersecurity</option>
+            <option value="product">Product</option>
+            <option value="behavioral">Behavioral</option>
+        </select>
+        <span class="adm-count" id="result-count"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="adm-table-wrap">
+        <div id="table-container" class="adm-loading">
+            <span class="spin">⏳</span> Loading records…
+        </div>
+    </div>
+</div>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="detail-modal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <p class="modal-title" id="modal-title">Candidate Detail</p>
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+<script>
+let allRecords = [];
+let sortCol    = 'completedAt';
+let sortDir    = -1;  // -1 desc, 1 asc
+
+/* ── Load data ── */
+async function loadData() {
+    document.getElementById('table-container').innerHTML =
+        '<div class="adm-loading"><span class="spin">⏳</span> Loading records…</div>';
+    try {
+        const r    = await fetch('/api/admin/data');
+        allRecords = await r.json();
+        renderAll();
+    } catch(e) {
+        document.getElementById('table-container').innerHTML =
+            `<div class="adm-empty"><div class="adm-empty-icon">⚠️</div><h3>Failed to load</h3><p>${e.message}</p></div>`;
+    }
+}
+
+/* ── Stats ── */
+function renderStats(records) {
+    const total = records.length;
+    const withScore = records.filter(r => r.overallScore != null);
+    const avg   = withScore.length ? (withScore.reduce((a,r) => a + r.overallScore, 0) / withScore.length).toFixed(1) : '—';
+    const pass  = total ? Math.round(withScore.filter(r => r.overallScore >= 6).length / (withScore.length || 1) * 100) : 0;
+    const hires = records.filter(r => r.recommendation?.toLowerCase().includes('hire')).length;
+
+    // Most popular type
+    const typeCounts = {};
+    records.forEach(r => { typeCounts[r.type] = (typeCounts[r.type] || 0) + 1; });
+    const topType = Object.entries(typeCounts).sort((a,b) => b[1]-a[1])[0]?.[0]?.replace(/-/g,' ') || '—';
+
+    // Today
+    const today = new Date().toDateString();
+    const todayCount = records.filter(r => r.completedAt && new Date(r.completedAt).toDateString() === today).length;
+
+    document.getElementById('stats-row').innerHTML = `
+        <div class="stat-card indigo">
+            <span class="stat-label">Total Interviews</span>
+            <span class="stat-value">${total}</span>
+            <span class="stat-sub">${todayCount} today</span>
+        </div>
+        <div class="stat-card emerald">
+            <span class="stat-label">Avg Score</span>
+            <span class="stat-value">${avg}</span>
+            <span class="stat-sub">out of 10</span>
+        </div>
+        <div class="stat-card sky">
+            <span class="stat-label">Pass Rate</span>
+            <span class="stat-value">${pass}%</span>
+            <span class="stat-sub">score ≥ 6</span>
+        </div>
+        <div class="stat-card violet">
+            <span class="stat-label">Hire / Strong Hire</span>
+            <span class="stat-value">${hires}</span>
+            <span class="stat-sub">of ${total} candidates</span>
+        </div>
+        <div class="stat-card amber">
+            <span class="stat-label">Top Category</span>
+            <span class="stat-value" style="font-size:1rem;padding-top:4px">${topType}</span>
+            <span class="stat-sub">most attempted</span>
+        </div>
+    `;
+
+    const dt = allRecords.length
+        ? `Last updated: ${new Date().toLocaleTimeString()} · ${total} total record${total!==1?'s':''}`
+        : 'No interviews completed yet.';
+    document.getElementById('adm-subtitle').textContent = dt;
+}
+
+/* ── Render everything ── */
+function renderAll() {
+    renderStats(allRecords);
+    applyFilters();
+}
+
+/* ── Filters + search ── */
+function applyFilters() {
+    const q    = document.getElementById('search-input').value.toLowerCase();
+    const rec  = document.getElementById('filter-rec').value;
+    const type = document.getElementById('filter-type').value;
+
+    let rows = allRecords.filter(r => {
+        const matchQ = !q ||
+            (r.name  || '').toLowerCase().includes(q) ||
+            (r.email || '').toLowerCase().includes(q) ||
+            (r.mobile|| '').toLowerCase().includes(q) ||
+            (r.role  || '').toLowerCase().includes(q);
+        const matchRec  = !rec  || r.recommendation === rec;
+        const matchType = !type || r.type === type;
+        return matchQ && matchRec && matchType;
+    });
+
+    // Sort
+    rows.sort((a, b) => {
+        let av = a[sortCol] ?? '', bv = b[sortCol] ?? '';
+        if (typeof av === 'number') return (av - bv) * sortDir;
+        return String(av).localeCompare(String(bv)) * sortDir;
+    });
+
+    document.getElementById('result-count').textContent =
+        `${rows.length} of ${allRecords.length} record${allRecords.length !== 1 ? 's' : ''}`;
+
+    renderTable(rows);
+}
+
+/* ── Table ── */
+const COLS = [
+    { key: 'name',           label: 'Name'           },
+    { key: 'email',          label: 'Email'           },
+    { key: 'mobile',         label: 'Mobile'          },
+    { key: 'role',           label: 'Role'            },
+    { key: 'type',           label: 'Category'        },
+    { key: 'overallScore',   label: 'Score'           },
+    { key: 'grade',          label: 'Grade'           },
+    { key: 'recommendation', label: 'Recommendation'  },
+    { key: 'completedAt',    label: 'Completed'       },
+];
+
+function setSort(key) {
+    if (sortCol === key) sortDir *= -1;
+    else { sortCol = key; sortDir = -1; }
+    applyFilters();
+}
+
+function renderTable(rows) {
+    if (!rows.length) {
+        document.getElementById('table-container').innerHTML = `
+            <div class="adm-empty">
+                <div class="adm-empty-icon">📭</div>
+                <h3>No records found</h3>
+                <p>Try adjusting your search or filters.</p>
+            </div>`;
+        return;
+    }
+
+    const th = COLS.map(c => {
+        const isSorted = sortCol === c.key;
+        const arrow = isSorted ? (sortDir === -1 ? '↓' : '↑') : '↕';
+        return `<th class="${isSorted ? 'sorted' : ''}" onclick="setSort('${c.key}')">
+            ${c.label}<span class="sort-arrow">${arrow}</span>
+        </th>`;
+    }).join('');
+
+    const tbody = rows.map((r, i) => {
+        const score    = r.overallScore != null ? r.overallScore : '—';
+        const scoreColor = scoreToColor(r.overallScore);
+        const gradeCls = gradeClass(r.grade);
+        const recCls   = recClass(r.recommendation);
+        const date     = r.completedAt ? new Date(r.completedAt).toLocaleString() : '—';
+        const typeLabel = (r.type || '').replace(/-/g, ' ');
+        return `<tr onclick="showDetail(${i})" style="cursor:pointer">
+            <td class="bold">${esc(r.name || '—')}</td>
+            <td>${esc(r.email || '—')}</td>
+            <td class="mono">${esc(r.mobile || '—')}</td>
+            <td>${esc(r.role || '—')}</td>
+            <td><span class="type-pill">${esc(typeLabel)}</span></td>
+            <td><span class="score-badge" style="color:${scoreColor};border-color:${scoreColor};background:${scoreColor}18">${score}</span></td>
+            <td><span class="grade-badge ${gradeCls}">${esc(r.grade || '—')}</span></td>
+            <td><span class="rec-badge ${recCls}">${esc(r.recommendation || '—')}</span></td>
+            <td style="white-space:nowrap;font-size:.78rem">${date}</td>
+        </tr>`;
+    }).join('');
+
+    // Keep sorted rows accessible for modal
+    window._tableRows = rows;
+
+    document.getElementById('table-container').innerHTML =
+        `<table class="adm-table"><thead><tr>${th}</tr></thead><tbody>${tbody}</tbody></table>`;
+}
+
+/* ── Detail modal ── */
+function showDetail(idx) {
+    const r = window._tableRows[idx];
+    if (!r) return;
+    document.getElementById('modal-title').textContent = r.name || 'Candidate';
+    const rows = [
+        ['Name',            r.name],
+        ['Email',           r.email],
+        ['Mobile',          r.mobile],
+        ['Role',            r.role],
+        ['Category',        (r.type||'').replace(/-/g,' ')],
+        ['Score',           r.overallScore != null ? `${r.overallScore} / 10` : '—'],
+        ['Grade',           r.grade],
+        ['Recommendation',  r.recommendation],
+        ['Questions Done',  r.questionsAnswered],
+        ['Started',         r.startedAt  ? new Date(r.startedAt ).toLocaleString() : '—'],
+        ['Completed',       r.completedAt? new Date(r.completedAt).toLocaleString() : '—'],
+        ['Session ID',      r.id],
+    ];
+    document.getElementById('modal-body').innerHTML = rows.map(([k,v]) =>
+        `<div class="modal-row"><span class="modal-key">${k}</span><span class="modal-val">${esc(String(v ?? '—'))}</span></div>`
+    ).join('');
+    document.getElementById('detail-modal').classList.add('open');
+}
+function closeModal() { document.getElementById('detail-modal').classList.remove('open'); }
+document.getElementById('detail-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+});
+
+/* ── Export CSV ── */
+function exportCSV() {
+    const headers = ['Name','Email','Mobile','Role','Category','Score','Grade','Recommendation','Questions','Started','Completed','Session ID'];
+    const rows = allRecords.map(r => [
+        r.name, r.email, r.mobile, r.role,
+        (r.type||'').replace(/-/g,' '),
+        r.overallScore ?? '', r.grade, r.recommendation,
+        r.questionsAnswered,
+        r.startedAt  ? new Date(r.startedAt ).toLocaleString() : '',
+        r.completedAt? new Date(r.completedAt).toLocaleString() : '',
+        r.id
+    ].map(v => `"${String(v ?? '').replace(/"/g,'""')}"`));
+
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `interviews_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+}
+
+/* ── Helpers ── */
+function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function scoreToColor(s) {
+    if (s == null) return '#94a3b8';
+    if (s >= 9)  return '#10b981';
+    if (s >= 7)  return '#6366f1';
+    if (s >= 5)  return '#f59e0b';
+    return '#ef4444';
+}
+function gradeClass(g) {
+    if (!g) return '';
+    return { 'A+':'grade-Ap','A':'grade-A','B+':'grade-Bp','B':'grade-B',
+             'C+':'grade-Cp','C':'grade-C','D':'grade-D','F':'grade-F' }[g] || '';
+}
+function recClass(r) {
+    if (!r) return '';
+    if (r === 'Strong Hire') return 'rec-sh';
+    if (r === 'Hire')        return 'rec-h';
+    if (r === 'Consider')    return 'rec-c';
+    return 'rec-n';
+}
+
+// Boot
+loadData();
+</script>
+</body>
+</html>

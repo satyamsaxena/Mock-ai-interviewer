@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InterviewAI - Mock Interview Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ══════════════ WELCOME ══════════════ -->
+<div id="screen-welcome" class="screen active">
+    <div class="wl-bg">
+        <div class="wl-blob wl-blob-1"></div>
+        <div class="wl-blob wl-blob-2"></div>
+        <div class="wl-blob wl-blob-3"></div>
+        <div class="wl-grid"></div>
+    </div>
+
+    <div class="wl-wrap" id="wl-wrap">
+        <!-- Left hero -->
+        <div class="wl-left">
+            <div class="brand">
+                <div class="brand-icon"><i data-lucide="zap"></i></div>
+                <span class="brand-name">InterviewAI</span>
+            </div>
+            <div class="wl-hero-text">
+                <h1>Land your<br><span class="gradient-text">dream job.</span></h1>
+                <p class="wl-desc">Practice with an AI interviewer that speaks, listens, reads your resume, and gives brutally honest feedback on every answer.</p>
+            </div>
+            <div class="wl-features">
+                <div class="wl-feat"><i data-lucide="mic"></i> Voice-enabled</div>
+                <div class="wl-feat"><i data-lucide="bar-chart-2"></i> Instant scoring</div>
+                <div class="wl-feat"><i data-lucide="file-text"></i> Resume-aware</div>
+                <div class="wl-feat"><i data-lucide="zap"></i> AI feedback</div>
+            </div>
+            <div class="wl-stats">
+                <div class="wl-stat"><span class="wl-stat-num">10</span><span class="wl-stat-label">Questions</span></div>
+                <div class="wl-stat-sep"></div>
+                <div class="wl-stat"><span class="wl-stat-num">4</span><span class="wl-stat-label">Categories</span></div>
+                <div class="wl-stat-sep"></div>
+                <div class="wl-stat"><span class="wl-stat-num">AI</span><span class="wl-stat-label">Powered</span></div>
+            </div>
+        </div>
+
+        <!-- Right form card -->
+        <div class="wl-card">
+            <div class="wl-card-header">
+                <h2 class="wl-card-title">Start your interview</h2>
+                <p class="wl-card-sub">Fill in your details to get started</p>
+            </div>
+
+            <form id="setup-form">
+                <div class="field-row">
+                    <div class="field">
+                        <label>Your Name</label>
+                        <div class="input-wrap">
+                            <i data-lucide="user" class="input-icon"></i>
+                            <input id="input-name" type="text" placeholder="e.g. Satyam Sharma" autocomplete="off" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Mobile Number</label>
+                        <div class="input-wrap">
+                            <i data-lucide="phone" class="input-icon"></i>
+                            <input id="input-mobile" type="tel" placeholder="e.g. +91 98765 43210" autocomplete="off" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Email Address</label>
+                    <div class="input-wrap">
+                        <i data-lucide="mail" class="input-icon"></i>
+                        <input id="input-email" type="email" placeholder="e.g. satyam@example.com" autocomplete="off" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Target Role</label>
+                    <div class="input-wrap">
+                        <i data-lucide="briefcase" class="input-icon"></i>
+                        <input id="input-role" type="text" placeholder="e.g. Senior Software Engineer" autocomplete="off" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Interview Category</label>
+                    <div class="type-grid">
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="all" checked>
+                            <div class="type-inner">
+                                <div class="type-icon-wrap emerald"><i data-lucide="layers"></i></div>
+                                <span class="type-title">Full Interview</span>
+                                <span class="type-sub">All-round mix</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="software-engineering">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap indigo"><i data-lucide="code-2"></i></div>
+                                <span class="type-title">Software Eng.</span>
+                                <span class="type-sub">DSA · Algorithms</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="frontend">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap sky"><i data-lucide="monitor"></i></div>
+                                <span class="type-title">Frontend Dev</span>
+                                <span class="type-sub">React · CSS · JS</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="backend">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap orange"><i data-lucide="server"></i></div>
+                                <span class="type-title">Backend Dev</span>
+                                <span class="type-sub">APIs · Node · Python</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="system-design">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap violet"><i data-lucide="layout"></i></div>
+                                <span class="type-title">System Design</span>
+                                <span class="type-sub">Scale · Architecture</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="devops">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap blue"><i data-lucide="cloud"></i></div>
+                                <span class="type-title">DevOps & Cloud</span>
+                                <span class="type-sub">Docker · K8s · AWS</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="data-science">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap pink"><i data-lucide="line-chart"></i></div>
+                                <span class="type-title">Data Science</span>
+                                <span class="type-sub">ML · Stats · Analytics</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="database">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap teal"><i data-lucide="database"></i></div>
+                                <span class="type-title">Database & SQL</span>
+                                <span class="type-sub">SQL · NoSQL · Indexing</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="mobile">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap purple"><i data-lucide="smartphone"></i></div>
+                                <span class="type-title">Mobile Dev</span>
+                                <span class="type-sub">iOS · Android · RN</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="cybersecurity">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap red"><i data-lucide="shield"></i></div>
+                                <span class="type-title">Cybersecurity</span>
+                                <span class="type-sub">OWASP · Auth · Crypto</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="product">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap amber"><i data-lucide="package"></i></div>
+                                <span class="type-title">Product Mgmt</span>
+                                <span class="type-sub">Metrics · Roadmap</span>
+                            </div>
+                        </label>
+                        <label class="type-card">
+                            <input type="radio" name="itype" value="behavioral">
+                            <div class="type-inner">
+                                <div class="type-icon-wrap rose"><i data-lucide="users"></i></div>
+                                <span class="type-title">Behavioral</span>
+                                <span class="type-sub">STAR · Leadership</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Resume Upload -->
+                <div class="field">
+                    <label>
+                        Resume <span class="optional-badge">Optional - personalises questions</span>
+                    </label>
+                    <div class="resume-drop" id="resume-drop">
+                        <input type="file" id="resume-file" accept=".pdf,.docx,.txt" hidden>
+                        <div class="resume-drop-inner">
+                            <div class="resume-drop-icon"><i data-lucide="upload-cloud"></i></div>
+                            <div>
+                                <p class="resume-drop-text">Drop your resume here or <button type="button" class="link-btn" id="resume-browse-btn">browse</button></p>
+                                <p class="resume-drop-sub">PDF, DOCX or TXT · Max 8 MB</p>
+                            </div>
+                        </div>
+                        <div class="resume-uploading hidden" id="resume-uploading">
+                            <div class="resume-spinner"></div>
+                            <span>Parsing resume…</span>
+                        </div>
+                    </div>
+                    <div class="resume-preview hidden" id="resume-preview">
+                        <div class="resume-preview-icon"><i data-lucide="file-text"></i></div>
+                        <div class="resume-preview-info">
+                            <span id="resume-filename" class="resume-preview-name"></span>
+                            <span class="resume-preview-sub">Resume loaded - questions will be personalised</span>
+                        </div>
+                        <button type="button" class="resume-remove-btn" id="resume-remove">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="start-btn">
+                    <i data-lucide="zap"></i>
+                    <span>Start Interview</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="wl-branding">
+        Designed &amp; developed by
+        <a href="https://www.linkedin.com/in/digitalsatyam/" target="_blank" rel="noopener" class="brand-link">
+            <i data-lucide="linkedin"></i> Satyam Saxena
+        </a>
+    </div>
+</div>
+
+<!-- ══════════════ INTERVIEW ══════════════ -->
+<div id="screen-interview" class="screen">
+
+    <header class="iv-header">
+        <div class="brand brand-sm">
+            <div class="brand-icon sm"><i data-lucide="zap"></i></div>
+            <span class="brand-name">InterviewAI</span>
+        </div>
+
+        <div class="iv-progress-wrap">
+            <div class="iv-progress-meta">
+                <span id="hd-qnum-label">Question 1 of 10</span>
+                <span id="hd-avg" class="hd-avg">-</span>
+            </div>
+            <div class="iv-progress-bar">
+                <div id="hd-progress-fill" class="iv-progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="iv-header-right">
+            <div class="model-badge hidden" id="model-badge" title="Active AI model"></div>
+            <button id="tts-toggle" class="icon-btn active" title="Toggle voice">
+                <i data-lucide="volume-2" id="tts-icon"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="iv-body">
+
+        <!-- Sidebar -->
+        <aside class="iv-sidebar">
+            <!-- Avatar -->
+            <div class="avatar-card">
+                <div class="avatar-ring" id="avatar-ring">
+                    <div class="avatar-inner">
+                        <svg class="av-face-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Collar/shirt -->
+                            <path d="M26 96 Q26 83 36 79 L50 86 L64 79 Q74 83 74 96Z" fill="#6366f1"/>
+                            <polygon points="50,86 45,79 50,74 55,79" fill="white" opacity="0.25"/>
+                            <!-- Face base -->
+                            <ellipse cx="50" cy="49" rx="27" ry="30" fill="#FDDBB4"/>
+                            <!-- Hair -->
+                            <ellipse cx="50" cy="23" rx="28" ry="18" fill="#1e1b4b"/>
+                            <rect x="22" y="22" width="56" height="12" fill="#1e1b4b"/>
+                            <!-- Ears -->
+                            <ellipse cx="22" cy="50" rx="4.5" ry="6.5" fill="#FDDBB4"/>
+                            <ellipse cx="78" cy="50" rx="4.5" ry="6.5" fill="#FDDBB4"/>
+                            <ellipse cx="22" cy="50" rx="2.5" ry="4.5" fill="#f4c490"/>
+                            <ellipse cx="78" cy="50" rx="2.5" ry="4.5" fill="#f4c490"/>
+                            <!-- Eyebrows -->
+                            <path class="av-brow-l" d="M29 38 Q36 34 43 37" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                            <path class="av-brow-r" d="M57 37 Q64 34 71 38" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                            <!-- Eye whites -->
+                            <ellipse cx="37" cy="47" rx="7.5" ry="7" fill="white"/>
+                            <ellipse cx="63" cy="47" rx="7.5" ry="7" fill="white"/>
+                            <!-- Iris (brand indigo) -->
+                            <circle cx="37.5" cy="47" r="4.8" fill="#4f46e5"/>
+                            <circle cx="63.5" cy="47" r="4.8" fill="#4f46e5"/>
+                            <!-- Pupil -->
+                            <circle cx="37.5" cy="47" r="2.4" fill="#1e1b4b"/>
+                            <circle cx="63.5" cy="47" r="2.4" fill="#1e1b4b"/>
+                            <!-- Eye shine -->
+                            <circle cx="39.5" cy="45" r="1.6" fill="white" opacity="0.9"/>
+                            <circle cx="65.5" cy="45" r="1.6" fill="white" opacity="0.9"/>
+                            <!-- Eyelids (blink overlay) -->
+                            <ellipse class="av-eyelid-l" cx="37" cy="47" rx="8" ry="7" fill="#FDDBB4"/>
+                            <ellipse class="av-eyelid-r" cx="63" cy="47" rx="8" ry="7" fill="#FDDBB4"/>
+                            <!-- Nose -->
+                            <circle cx="46.5" cy="56" r="1.5" fill="#d4956a" opacity="0.55"/>
+                            <circle cx="53.5" cy="56" r="1.5" fill="#d4956a" opacity="0.55"/>
+                            <!-- Mouth states (only one visible at a time) -->
+                            <!-- 0: Smile default -->
+                            <path id="av-m-0" d="M38 65 Q50 72 62 65" stroke="#c4956a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <!-- 1: Thinking/flat -->
+                            <path id="av-m-1" class="hidden" d="M38 66 Q50 65 62 66" stroke="#c4956a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <!-- 2: Speaking wide open -->
+                            <g id="av-m-2" class="hidden">
+                                <ellipse cx="50" cy="67" rx="9" ry="6.5" fill="#6B2121"/>
+                                <ellipse cx="50" cy="65.5" rx="6.5" ry="3" fill="#c4956a"/>
+                            </g>
+                            <!-- 3: Speaking narrow -->
+                            <g id="av-m-3" class="hidden">
+                                <ellipse cx="50" cy="67" rx="6" ry="4" fill="#6B2121"/>
+                                <ellipse cx="50" cy="66" rx="4" ry="2" fill="#c4956a"/>
+                            </g>
+                            <!-- Cheeks -->
+                            <ellipse cx="23" cy="57" rx="7.5" ry="4.5" fill="#FFB7A0" opacity="0.4"/>
+                            <ellipse cx="77" cy="57" rx="7.5" ry="4.5" fill="#FFB7A0" opacity="0.4"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="sound-bars" id="sound-bars">
+                    <div class="bar"></div><div class="bar"></div>
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
+                <p class="av-name">Alex</p>
+                <div class="av-status" id="av-status">
+                    <span class="av-dot idle" id="av-dot"></span>
+                    <span id="av-status-text">Ready</span>
+                </div>
+            </div>
+
+            <!-- Session info -->
+            <div class="sb-card">
+                <p class="sb-label"><i data-lucide="user"></i> Candidate</p>
+                <p id="sb-name" class="sb-val-name"></p>
+                <p id="sb-role" class="sb-val-role"></p>
+                <span id="sb-type" class="sb-badge"></span>
+            </div>
+
+            <!-- Scores -->
+            <div class="sb-card">
+                <p class="sb-label"><i data-lucide="bar-chart-2"></i> Scores</p>
+                <div id="sb-scores">
+                    <p class="sb-empty">No answers yet</p>
+                </div>
+            </div>
+
+            <!-- Skills Coverage -->
+            <div class="sb-card hidden" id="skills-card">
+                <p class="sb-label"><i data-lucide="layers"></i> Skills Coverage</p>
+                <div id="sb-skills"></div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="iv-main">
+
+            <!-- Question -->
+            <div class="q-card" id="q-card">
+                <div class="q-meta">
+                    <span id="q-topic" class="chip chip-indigo"></span>
+                    <span id="q-diff" class="chip"></span>
+                </div>
+                <p id="q-text" class="q-text"></p>
+            </div>
+
+            <!-- Answer Hints + Sample Answers -->
+            <div class="hints-area hidden" id="hints-area">
+                <div class="hints-header">
+                    <i data-lucide="lightbulb"></i>
+                    <span>Answer Guide</span>
+                    <span class="hints-kbd">Tab → navigate · Enter → insert</span>
+                </div>
+                <div id="hints-cards" class="hints-cards"></div>
+
+                <!-- Complete sample answers (click to use) -->
+                <div class="sa-section hidden" id="sa-section">
+                    <div class="sa-section-hdr">
+                        <i data-lucide="sparkles"></i>
+                        <span>Complete Sample Answers</span>
+                        <span class="hints-kbd">Click to instantly use</span>
+                    </div>
+                    <div id="sa-cards" class="sa-cards"></div>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="fb-card hidden" id="fb-card">
+                <div class="fb-score-row">
+                    <div class="fb-score-circle" id="fb-score-circle">
+                        <span id="fb-score-num"></span>
+                        <span class="fb-score-of">/10</span>
+                    </div>
+                    <div class="fb-score-info">
+                        <p id="fb-label" class="fb-label"></p>
+                        <p id="fb-feedback" class="fb-text"></p>
+                    </div>
+                </div>
+                <div class="fb-divider"></div>
+                <div class="fb-cols">
+                    <div class="fb-col">
+                        <p class="fb-col-title success"><i data-lucide="check-circle-2"></i> Strengths</p>
+                        <ul id="fb-strengths" class="fb-list"></ul>
+                    </div>
+                    <div class="fb-col">
+                        <p class="fb-col-title warning"><i data-lucide="trending-up"></i> Improve</p>
+                        <ul id="fb-improvements" class="fb-list"></ul>
+                    </div>
+                </div>
+                <div class="fb-ideal hidden" id="fb-ideal">
+                    <div class="fb-ideal-icon"><i data-lucide="lightbulb"></i></div>
+                    <div>
+                        <p class="fb-ideal-title">Model Answer</p>
+                        <p id="fb-ideal-text" class="fb-ideal-body"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post-answer suggestions -->
+            <div class="sug-area hidden" id="suggestions-area">
+                <p class="sug-label"><i data-lucide="sparkles"></i> Study tips for next time</p>
+                <div id="suggestions-chips" class="sug-chips"></div>
+            </div>
+
+            <!-- Alex's Explanation panel (shown on I don't know) -->
+            <div class="explanation-panel hidden" id="explanation-panel">
+                <div class="exp-header">
+                    <div class="exp-hdr-icon"><i data-lucide="lightbulb"></i></div>
+                    <div class="exp-hdr-text">
+                        <p class="exp-hdr-title">Alex's Explanation</p>
+                        <p id="exp-topic" class="exp-hdr-sub">Topic</p>
+                    </div>
+                    <button type="button" class="exp-close-btn" id="exp-close">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <p id="exp-text" class="exp-body-text"></p>
+                <div id="exp-points" class="exp-points"></div>
+                <div class="exp-block hidden" id="exp-example">
+                    <span class="exp-block-label">Real-world Example</span>
+                    <p id="exp-example-text" class="exp-block-text"></p>
+                </div>
+                <div class="exp-block hidden" id="exp-hint-wrap">
+                    <span class="exp-block-label">How to approach your answer</span>
+                    <p id="exp-hint-text" class="exp-block-text"></p>
+                </div>
+                <div class="exp-block hidden" id="exp-code-wrap"></div>
+                <div class="exp-block hidden" id="exp-diagram-wrap">
+                    <span class="exp-block-label">Visual Diagram</span>
+                    <div class="exp-diagram-canvas"></div>
+                </div>
+                <div class="exp-footer">
+                    <button type="button" id="exp-try-btn" class="exp-try-btn">
+                        <i data-lucide="refresh-cw"></i>
+                        Got it - I'll try now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Answer input -->
+            <div class="ans-card" id="ans-area">
+                <div class="ans-label-row">
+                    <p class="ans-label"><i data-lucide="message-square"></i> Your Answer</p>
+                    <button type="button" id="ans-hindi-btn" class="ans-hindi-btn" title="Read answer in Hindi">
+                        🇮🇳 <span>हिंदी में पढ़ें</span>
+                    </button>
+                </div>
+                <div class="ans-input-wrap">
+                    <textarea id="ans-input" class="ans-input"
+                        placeholder="Type your answer, use hints below, or say 'I don't know' for Alex's explanation…"></textarea>
+                </div>
+                <!-- Hindi translation panel -->
+                <div id="ans-hindi-panel" class="ans-hindi-panel hidden"></div>
+                <div class="ans-idk-banner hidden" id="idk-banner">
+                    <i data-lucide="help-circle"></i>
+                    <span>Not sure? Alex can walk you through the concept.</span>
+                    <button type="button" id="idk-btn" class="idk-ask-btn">Ask Alex</button>
+                </div>
+                <div class="ans-footer">
+                    <div class="ans-footer-left">
+                        <span id="word-count" class="word-count">0 words · Ctrl+Enter to submit</span>
+                        <div class="stt-indicator" id="stt-indicator">
+                            <span class="stt-dot"></span>
+                            Listening - speak now, auto-typing
+                        </div>
+                    </div>
+                    <div class="ans-actions">
+                        <button id="mic-btn" class="mic-btn" title="Click to speak - auto-types your answer">
+                            <i data-lucide="mic" id="mic-icon"></i>
+                        </button>
+                        <button id="submit-btn" class="btn-primary sm">
+                            <span>Submit</span>
+                            <i data-lucide="send"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next question -->
+            <div class="next-area hidden" id="next-area">
+                <button id="next-btn" class="btn-next">
+                    <span>Next Question</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="loading-card">
+            <div class="loading-ring"></div>
+            <div class="loading-content">
+                <p class="loading-title">Alex is thinking…</p>
+                <p id="loading-text" class="loading-sub">Reviewing your answer</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ REPORT ══════════════ -->
+<div id="screen-report" class="screen">
+    <div class="rpt-bg">
+        <div class="rpt-blob rpt-blob-1"></div>
+        <div class="rpt-blob rpt-blob-2"></div>
+    </div>
+    <div class="rpt-wrap" id="rpt-wrap">
+
+        <div class="rpt-header">
+            <div class="brand">
+                <div class="brand-icon"><i data-lucide="zap"></i></div>
+                <span class="brand-name">InterviewAI</span>
+            </div>
+            <h2>Interview Complete!</h2>
+            <p id="rpt-candidate" class="rpt-candidate"></p>
+        </div>
+
+        <div class="rpt-hero" id="rpt-hero">
+            <div class="rpt-ring-wrap">
+                <svg viewBox="0 0 140 140">
+                    <circle cx="70" cy="70" r="56" class="ring-track"/>
+                    <circle cx="70" cy="70" r="56" id="ring-fill" class="ring-fill"/>
+                </svg>
+                <div class="ring-center">
+                    <span id="rpt-score" class="ring-score"></span>
+                    <span class="ring-of">/ 10</span>
+                </div>
+            </div>
+            <div class="rpt-verdict">
+                <div class="rpt-badges">
+                    <span id="rpt-grade" class="vbadge"></span>
+                    <span id="rpt-rec"   class="vbadge"></span>
+                </div>
+                <p id="rpt-summary" class="rpt-summary"></p>
+            </div>
+        </div>
+
+        <div class="rpt-grid">
+            <div class="rpt-card">
+                <h3 class="rpt-card-title success"><i data-lucide="shield-check"></i> Top Strengths</h3>
+                <ul id="rpt-strengths" class="rpt-list green"></ul>
+            </div>
+            <div class="rpt-card">
+                <h3 class="rpt-card-title warning"><i data-lucide="target"></i> Areas to Improve</h3>
+                <ul id="rpt-improvements" class="rpt-list amber"></ul>
+            </div>
+        </div>
+
+        <div class="rpt-card rpt-full">
+            <h3 class="rpt-card-title"><i data-lucide="list"></i> Question Breakdown</h3>
+            <div id="rpt-breakdown"></div>
+        </div>
+
+        <div class="rpt-card rpt-full rpt-steps">
+            <h3 class="rpt-card-title indigo"><i data-lucide="compass"></i> Personalised Next Steps</h3>
+            <p id="rpt-nextsteps"></p>
+        </div>
+
+        <div class="rpt-actions">
+            <button id="restart-btn" class="btn-primary">
+                <i data-lucide="refresh-cw"></i>
+                <span>New Interview</span>
+            </button>
+        </div>
+
+        <div class="rpt-branding">
+            Designed &amp; developed by
+            <a href="https://www.linkedin.com/in/digitalsatyam/" target="_blank" rel="noopener" class="brand-link">
+                <i data-lucide="linkedin"></i> Satyam Saxena
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
